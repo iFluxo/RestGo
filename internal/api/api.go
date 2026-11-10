@@ -9,19 +9,22 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"restgo/internal/store"
 )
 
 type handler struct {
-	store *store.Store
+	store   *store.Store
+	started time.Time
 }
 
 // New returns a complete http.Handler: router plus middleware.
 func New(st *store.Store) http.Handler {
-	h := &handler{store: st}
+	h := &handler{store: st, started: time.Now()}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /{$}", h.root)
 	mux.HandleFunc("GET /health", h.health)
 	mux.HandleFunc("GET /items", h.listItems)
 	mux.HandleFunc("POST /items", h.createItem)
@@ -32,8 +35,15 @@ func New(st *store.Store) http.Handler {
 	return recoverer(logging(mux))
 }
 
-func (h *handler) health(w http.ResponseWriter, _ *http.Request) {
+func (h *handler) root(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (h *handler) health(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status": "ok",
+		"uptime": time.Since(h.started).Milliseconds(), // milliseconds
+	})
 }
 
 func (h *handler) listItems(w http.ResponseWriter, _ *http.Request) {

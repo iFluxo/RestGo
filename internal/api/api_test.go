@@ -119,11 +119,39 @@ func TestInvalidID(t *testing.T) {
 	}
 }
 
+func TestRoot(t *testing.T) {
+	h := newTestHandler()
+
+	rec := do(t, h, http.MethodGet, "/", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	if got := rec.Body.String(); !strings.Contains(got, `"status":"ok"`) {
+		t.Fatalf("body = %q, want status ok", got)
+	}
+
+	rec = do(t, h, http.MethodGet, "/unknown", "")
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("unknown path: status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
 func TestHealth(t *testing.T) {
 	h := newTestHandler()
 
 	rec := do(t, h, http.MethodGet, "/health", "")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	var body struct {
+		Status string `json:"status"`
+		Uptime int64  `json:"uptime"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode health: %v", err)
+	}
+	if body.Status != "ok" || body.Uptime < 0 {
+		t.Fatalf("health = %+v, want status ok and non-negative uptime", body)
 	}
 }

@@ -27,14 +27,17 @@ go build -o bin/server ./cmd/server
 
 ## Endpoints
 
-| Method | Path          | Description  | Success |
-|--------|---------------|--------------|---------|
-| GET    | `/health`     | Health check | 200     |
-| GET    | `/items`      | List items   | 200     |
-| POST   | `/items`      | Create item  | 201     |
-| GET    | `/items/{id}` | Get item     | 200     |
-| PUT    | `/items/{id}` | Update item  | 200     |
-| DELETE | `/items/{id}` | Delete item  | 204     |
+| Method | Path          | Description           | Success |
+|--------|---------------|-----------------------|---------|
+| GET    | `/`           | Simple status         | 200     |
+| GET    | `/health`     | Health check + uptime | 200     |
+| GET    | `/items`      | List items            | 200     |
+| POST   | `/items`      | Create item           | 201     |
+| GET    | `/items/{id}` | Get item              | 200     |
+| PUT    | `/items/{id}` | Update item           | 200     |
+| DELETE | `/items/{id}` | Delete item           | 204     |
+
+`GET /` and `GET /health` respond with `{"status":"ok"}`; `/health` also includes the process uptime in milliseconds, e.g. `{"status":"ok","uptime":1234}`.
 
 `POST`/`PUT` payload:
 
@@ -45,6 +48,8 @@ go build -o bin/server ./cmd/server
 Rules: `name` is required (max 100 characters), `price` >= 0, body max 1 MB, unknown fields are rejected. Errors always look like `{"error":"..."}`.
 
 ```bash
+curl localhost:8080/
+curl localhost:8080/health
 curl localhost:8080/items
 curl -X POST localhost:8080/items -H 'Content-Type: application/json' -d '{"name":"Fried Rice","price":25000}'
 curl -X PUT localhost:8080/items/1 -H 'Content-Type: application/json' -d '{"name":"Special Fried Rice","price":30000}'
